@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Sequelize, DataTypes } = require('sequelize');
+const Eureka = require('eureka-js-client').Eureka;
 
 const app = express();
 app.use(bodyParser.json());
@@ -18,7 +19,7 @@ const Employee = sequelize.define('Employee', {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+
     },
     phone: {
       type: DataTypes.STRING,
@@ -39,7 +40,7 @@ const Employee = sequelize.define('Employee', {
     await Employee.create({
       firstName: 'John',
       lastName: 'Doe',
-      email: 'johndoe@example.com',
+      email: 'johndsoe@example.com',
       phone: '123-456-7890',
       hireDate: '2022-01-01',
       salary: 50000
@@ -48,7 +49,7 @@ const Employee = sequelize.define('Employee', {
     await Employee.create({
       firstName: 'Jane',
       lastName: 'Doe',
-      email: 'janedoe@example.com',
+      email: 'janesdoe@example.com',
       phone: '234-567-8901',
       hireDate: '2022-02-01',
       salary: 60000
@@ -122,12 +123,70 @@ app.delete('/employees/:id', async (req, res) => {
       res.status(500).json({ message: 'Error deleting employee' });
     }
   });
-  
-  sequelize.sync().then(() => {
-    app.listen(3000, () => {
-      console.log('Server started on port 3000');
+const eureka = new Eureka({  instance: {
+        app: 'employee-service',
+        instanceId: 'NodeJS-employee-service',
+        hostName: 'localhost',
+        ipAddr: '127.0.0.1',
+        port: {
+            '$': 3000,
+            '@enabled': 'true',
+        },
+        vipAddress: 'employee-service',
+        dataCenterInfo: {
+            '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+            name: 'MyOwn',
+        },
+        registerWithEureka: true,
+        fetchRegistry: true,
+    },
+    eureka: {
+        host: 'localhost',
+        port: 8761,
+        servicePath: '/eureka/apps/',
+
+    },});
+
+Promise.all([sequelize.sync(), new Promise((resolve, reject) => {
+    eureka.start((error) => {
+        if (error) {
+            reject(error);
+        } else {
+            console.log('Eureka client started');
+            resolve();
+        }
     });
-  }).catch((error) => {
-    console.log(error);
-  });
-  
+})])
+    .then(() => {
+        app.listen(3000, () => {
+            console.log('Server started on port 3000');
+        });
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+process.on('SIGTERM', () => {
+    console.log('Received SIGTERM signal. Stopping server and Eureka client.');
+
+    // stop the Eureka client
+    eureka.stop(() => {
+        console.log('Eureka client stopped.');
+        process.exit(0);
+    });
+
+
+});
+
+// handle the SIGINT signal
+process.on('SIGINT', () => {
+    console.log('Received SIGINT signal. Stopping server and Eureka client.');
+
+    // stop the Eureka client
+    eureka.stop(() => {
+        console.log('Eureka client stopped.');
+        process.exit(0);
+    });
+
+    // stop the server
+
+});
