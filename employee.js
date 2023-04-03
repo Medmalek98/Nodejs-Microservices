@@ -2,11 +2,15 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { Sequelize, DataTypes } = require('sequelize');
 const Eureka = require('eureka-js-client').Eureka;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(bodyParser.json());
 const sequelize = new Sequelize('mysql://root:root@localhost:3306/database');
-
+const eurekaHost = (process.env.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE || '172.20.0.2');
+const eurekaPort = 8761;
+const hostName = (process.env.HOSTNAME || 'localhost')
+const ipAddr = 'localhost';
 const Employee = sequelize.define('Employee', {
     firstName: {
       type: DataTypes.STRING,
@@ -126,10 +130,10 @@ app.delete('/employees/:id', async (req, res) => {
 const eureka = new Eureka({  instance: {
         app: 'employee-service',
         instanceId: 'NodeJS-employee-service',
-        hostName: 'localhost',
-        ipAddr: '127.0.0.1',
+        hostName: hostName,
+        ipAddr: ipAddr,
         port: {
-            '$': 3000,
+            '$': PORT,
             '@enabled': 'true',
         },
         vipAddress: 'employee-service',
@@ -141,9 +145,10 @@ const eureka = new Eureka({  instance: {
         fetchRegistry: true,
     },
     eureka: {
-        host: 'localhost',
-        port: 8761,
+        host: eurekaHost,
+        port: eurekaPort ,
         servicePath: '/eureka/apps/',
+ 
 
     },});
 
