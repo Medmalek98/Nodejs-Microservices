@@ -6,11 +6,11 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(bodyParser.json());
-const sequelize = new Sequelize('mysql://root:root@localhost:3306/database');
-const eurekaHost = (process.env.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE || '172.20.0.2');
+const sequelize = new Sequelize('mysql://root:root@mysqlservice:3306/database');
+const eurekaHost = (process.env.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE || 'eurekaserver');
 const eurekaPort = 8761;
-const hostName = (process.env.HOSTNAME || 'localhost')
-const ipAddr = 'localhost';
+const hostName = (process.env.HOSTNAME || 'eurekaserver')
+const ipAddr = 'eurekaserver';
 const Employee = sequelize.define('Employee', {
     firstName: {
       type: DataTypes.STRING,

@@ -1,8 +1,8 @@
-FROM node:14
-WORKDIR C:/Users/habensalah/Downloads/nodejs
-COPY package*.json ./
-RUN npm install
-COPY . .
+FROM mysql:latest
 
-EXPOSE 3000
-CMD ["node", "employee.js"]
+ENV MYSQL_ROOT_PASSWORD=root
+
+ENV MYSQL_DATABASE=database
+ENV MYSQL_ROOT_PASSWORD=root
+
+EXPOSE 3306
