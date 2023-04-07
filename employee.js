@@ -6,7 +6,13 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(bodyParser.json());
-const sequelize = new Sequelize('mysql://root:root@mysqlservice:3306/database');
+const sequelize = new Sequelize('mysql://root:root@mysqlservice:3306/database', {
+    dialectOptions: {
+        connectTimeout: 30000 },
+    retry: {
+        max: 10
+    }
+});
 const eurekaHost = (process.env.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE || 'eurekaserver');
 const eurekaPort = 8761;
 const hostName = (process.env.HOSTNAME || 'eurekaserver')
@@ -63,8 +69,7 @@ const Employee = sequelize.define('Employee', {
   .catch((error) => {
     console.error('Unable to sync Employee model with the database:', error);
   });
-// Create a new employee
-app.post('/employees', async (req, res) => {
+app.post('/apinode/employees', async (req, res) => {
     try {
       const employee = await Employee.create(req.body);
       res.json(employee);
@@ -73,8 +78,7 @@ app.post('/employees', async (req, res) => {
     }
   });
   
-  // Read all employees
-  app.get('/employees', async (req, res) => {
+  app.get('/apinode/employees', async (req, res) => {
     try {
       const employees = await Employee.findAll();
       res.json(employees);
@@ -83,8 +87,7 @@ app.post('/employees', async (req, res) => {
     }
   });
   
-  // Read one employee
-  app.get('/employees/:id', async (req, res) => {
+  app.get('/apinode/employees/:id', async (req, res) => {
     try {
       const employee = await Employee.findByPk(req.params.id);
       if (employee) {
@@ -97,8 +100,7 @@ app.post('/employees', async (req, res) => {
     }
   });
   
-  // Update an employee
-  app.put('/employees/:id', async (req, res) => {
+  app.put('/apinode/employees/:id', async (req, res) => {
     try {
         const employee = await Employee.findByPk(req.params.id);
         if (employee) {
@@ -112,8 +114,7 @@ app.post('/employees', async (req, res) => {
         res.status(500).json({ message: 'Error updating employee' });
       }
     });
-    // DELETE operation
-app.delete('/employees/:id', async (req, res) => {
+app.delete('/apinode/employees/:id', async (req, res) => {
     try {
       const employee = await Employee.findByPk(req.params.id);
       if (employee) {
@@ -148,9 +149,9 @@ const eureka = new Eureka({  instance: {
         host: eurekaHost,
         port: eurekaPort ,
         servicePath: '/eureka/apps/',
- 
-
-    },});
+        maxRetries: 200, // Number of retries
+        requestRetryDelay: 20, // Interval between retries in milliseconds
+     },});
 
 Promise.all([sequelize.sync(), new Promise((resolve, reject) => {
     eureka.start((error) => {
@@ -172,26 +173,16 @@ Promise.all([sequelize.sync(), new Promise((resolve, reject) => {
     });
 process.on('SIGTERM', () => {
     console.log('Received SIGTERM signal. Stopping server and Eureka client.');
-
-    // stop the Eureka client
     eureka.stop(() => {
         console.log('Eureka client stopped.');
         process.exit(0);
     });
-
-
 });
 
-// handle the SIGINT signal
 process.on('SIGINT', () => {
     console.log('Received SIGINT signal. Stopping server and Eureka client.');
-
-    // stop the Eureka client
     eureka.stop(() => {
         console.log('Eureka client stopped.');
         process.exit(0);
     });
-
-    // stop the server
-
 });
