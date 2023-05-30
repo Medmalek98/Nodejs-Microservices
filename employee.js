@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 const sequelize = new Sequelize('mysql://root:root@mysqlservice:3306/database', {
     dialectOptions: {
-        connectTimeout: 30000 },
+        connectTimeout: 30000},
     retry: {
         max: 10
     }
