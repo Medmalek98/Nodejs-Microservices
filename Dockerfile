@@ -1,4 +1,3 @@
-#DataBase
 FROM mysql:8.0.31-oracle
 
 ENV MYSQL_ROOT_PASSWORD=root
