@@ -1,5 +1,5 @@
 FROM node:14
-WORKDIR C:/Users/habensalah/Downloads/nodejs
+WORKDIR C:\Users\Public\malek\Nodejs-Microservices
 COPY package*.json ./
 RUN npm install
 COPY . .
